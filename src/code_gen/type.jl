@@ -19,3 +19,21 @@ struct Tape{INPUT}
     instance::Any
     machine::Machine
 end
+
+mutable struct NoInit{T}
+    val::T
+    function NoInit{T}() where {T}
+        return new{T}()
+    end
+    function NoInit{T}(val::T) where {T}
+        return new{T}(val)
+    end
+end
+
+Base.getindex(w::NoInit{T}) where {T} = w.val
+Base.setindex!(w::NoInit{T}, val::T) where {T} = w.val = val
+Base.convert(::Type{NoInit{T}}, val::T) where {T} = NoInit{T}(val)
+Base.convert(::Type{T}, val::NoInit{T}) where {T} = val[]
+
+@inline _deref(v) = v
+@inline _deref(ni::NoInit{T}) where {T} = ni[]

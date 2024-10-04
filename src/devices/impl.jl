@@ -80,3 +80,11 @@ Dispatch from the given [`FunctionCall`](@ref) to the interface function `_gen_l
 function gen_local_init(fc::FunctionCall)
     return _gen_local_init(fc, fc.device, fc.device.cacheStrategy)
 end
+
+"""
+    gen_uninit_local(fc::FunctionCall)
+
+"""
+function gen_uninit_local(fc::FunctionCall)
+    return _gen_uninit_local(fc, fc.device, fc.device.cacheStrategy)
+end

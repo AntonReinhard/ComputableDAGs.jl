@@ -54,11 +54,13 @@ function expr_from_fc(fc::FunctionCall{VectorT,0}) where {VectorT}
     func_call = Expr(
         :call,
         fc.func,
-        eval.(
-            _gen_access_expr.(Ref(fc.device), Ref(fc.device.cacheStrategy), fc.arguments)
+        Expr.(
+            :call,
+            Ref(:(ComputableDAGs._deref)),
+            _gen_access_expr.(Ref(fc.device), Ref(fc.device.cacheStrategy), fc.arguments),
         )...,
     )
-    access_expr = eval(gen_access_expr(fc))
+    access_expr = gen_access_expr(fc)
 
     return Expr(:(=), access_expr, func_call)
 end
@@ -73,11 +75,13 @@ function expr_from_fc(fc::FunctionCall{VectorT,M}) where {VectorT,M}
         :call,
         fc.func,
         fc.value_arguments...,
-        eval.(
-            _gen_access_expr.(Ref(fc.device), Ref(fc.device.cacheStrategy), fc.arguments)
+        Expr.(
+            :call,
+            Ref(:(ComputableDAGs._deref)),
+            _gen_access_expr.(Ref(fc.device), Ref(fc.device.cacheStrategy), fc.arguments),
         )...,
     )
-    access_expr = eval(gen_access_expr(fc))
+    access_expr = gen_access_expr(fc)
 
     return Expr(:(=), access_expr, func_call)
 end
@@ -161,22 +165,23 @@ function gen_function_body(tape::Tape; closures_size::Int)
     # this helps because we can collect all undefined arguments to the closures that have to be returned somewhere earlier
     undefined_argument_symbols = Set{Symbol}()
     # the final return symbol is the return of the entire generated function, it always has to be returned
-    push!(undefined_argument_symbols, eval(gen_access_expr(fc_vec[end])))
+    push!(undefined_argument_symbols, gen_access_expr(fc_vec[end]))
 
     for i in length(fc_vec):(-closures_size):1
         e = i
         b = max(i - closures_size, 1)
         code_block = fc_vec[b:e]
 
-        # collect `local var` statements that need to exist before the closure starts
-        local_inits = gen_local_init.(code_block)
+        # collect `local var` statements that need to exist inside the closure, with type annotations
+        closure_inits = Expr[]
 
-        return_symbols = eval.(gen_access_expr.(code_block))
+        # the local inits are outside of the closure call and employ the NoInit type to let them be defined without taking time for initialization
+        local_inits = Expr[]
 
-        ret_symbols_set = Set(return_symbols)
+        ret_symbols_set = Set(gen_access_expr.(code_block))
         for fc in code_block
             for arg in fc.arguments
-                symbol = eval(_gen_access_expr(fc.device, fc.device.cacheStrategy, arg))
+                symbol = _gen_access_expr(fc.device, fc.device.cacheStrategy, arg)
 
                 # symbol won't be defined if it is first calculated in the closure
                 # so don't add it to the arguments in this case
@@ -187,24 +192,29 @@ function gen_function_body(tape::Tape; closures_size::Int)
         end
 
         intersect!(ret_symbols_set, undefined_argument_symbols)
-        return_symbols = Symbol[ret_symbols_set...]
+
+        # generate the local inits, which is exactly the return symbol set, but with type information
+        # this can probably be done better (more performant and without an extra loop)
+        for fc in code_block
+            if !(gen_access_expr(fc) in ret_symbols_set)
+                continue
+            end
+            push!(local_inits, gen_uninit_local(fc))
+        end
 
         closure = Expr(
             :block,
+            local_inits...,
             Expr(
-                :(=),
-                Expr(:tuple, return_symbols...),
-                Expr(
-                    :call,                                  # call to the following closure (no arguments)
-                    Expr(                                   # create the closure: () -> code block; return (locals)
-                        :->,
-                        :(),                                # closure arguments (none)
-                        Expr(                               # actual function body of the closure
-                            :block,
-                            local_inits...,                 # declare local variables with type information inside the closure
-                            expr_from_fc.(code_block)...,
-                            Expr(:return, Expr(:tuple, return_symbols...)),
-                        ),
+                :call,                                  # call to the following closure (no arguments)
+                Expr(                                   # create the closure: () -> code block; return (locals)
+                    :->,
+                    :(),
+                    Expr(                               # actual function body of the closure
+                        :block,
+                        closure_inits...,                 # declare local variables with type information inside the closure
+                        expr_from_fc.(code_block)...,
+                        Expr(:return, :nothing),
                     ),
                 ),
             ),

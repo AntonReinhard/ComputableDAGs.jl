@@ -37,7 +37,7 @@ export get_operations
 export execute
 export get_compute_function
 export gen_tape, execute_tape
-export unpack_identity
+export unpack_identity, NoInit
 
 # estimator
 export cost_type, graph_cost, operation_effect

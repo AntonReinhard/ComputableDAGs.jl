@@ -29,12 +29,10 @@ function get_compute_function(
     code = gen_function_body(tape; closures_size=closures_size)
 
     functionId = to_var_name(UUIDs.uuid1(rng[1]))
-    resSym = eval(
-        _gen_access_expr(
-            entry_device(tape.machine),
-            entry_device(tape.machine).cacheStrategy,
-            tape.outputSymbol,
-        ),
+    resSym = _gen_access_expr(
+        entry_device(tape.machine),
+        entry_device(tape.machine).cacheStrategy,
+        tape.outputSymbol,
     )
     expr = #
     Expr(

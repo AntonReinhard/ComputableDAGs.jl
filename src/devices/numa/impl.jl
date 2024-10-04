@@ -69,16 +69,15 @@ end
 Interface implementation, dispatched to from [`gen_access_expr`](@ref).
 """
 function _gen_access_expr(::NumaNode, ::LocalVariables, symbol::Symbol)
-    # TODO rewrite these with Expr instead of quote node
     s = Symbol("data_$symbol")
-    quote_node = Meta.parse(":($s)")
-    return quote_node
+    return s
 end
 
 """
     _gen_access_expr(device::NumaNode, ::Dictionary, symbol::Symbol)
 
 Interface implementation, dispatched to from [`gen_access_expr`](@ref).
+Deprecate this
 """
 function _gen_access_expr(device::NumaNode, ::Dictionary, symbol::Symbol)
     # TODO rewrite these with Expr instead of quote node
@@ -94,8 +93,18 @@ Interface implementation, dispatched to from [`gen_local_init`](@ref).
 """
 function _gen_local_init(fc::FunctionCall, ::NumaNode, ::LocalVariables)
     s = Symbol("data_$(fc.return_symbol)")
-    quote_node = Expr(:local, s, :(::), Symbol(fc.return_type)) # TODO: figure out how to get type info for this local variable
-    return quote_node
+    expr = Expr(:local, s, :(::), Symbol(fc.return_type))
+    return expr
+end
+
+function _gen_uninit_local(fc::FunctionCall, ::NumaNode, ::LocalVariables)
+    s = Symbol("data_$(fc.return_symbol)")
+    expr = Expr(
+        :(=),                                                                   # assignment
+        Expr(:(::), s, Expr(:curly, :NoInit, fc.return_type)),          # data_<>::NoInit{T}
+        Expr(:call, Expr(:curly, :NoInit, fc.return_type)),             # NoInit{T}()
+    )
+    return expr
 end
 
 """
