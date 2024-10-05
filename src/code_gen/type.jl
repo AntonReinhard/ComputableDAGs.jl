@@ -22,18 +22,22 @@ end
 
 mutable struct NoInit{T}
     val::T
-    function NoInit{T}() where {T}
+    @inline function NoInit{T}() where {T}
         return new{T}()
     end
-    function NoInit{T}(val::T) where {T}
+    @inline function NoInit{T}(val::T) where {T}
         return new{T}(val)
     end
 end
 
-Base.getindex(w::NoInit{T}) where {T} = w.val
-Base.setindex!(w::NoInit{T}, val::T) where {T} = w.val = val
-Base.convert(::Type{NoInit{T}}, val::T) where {T} = NoInit{T}(val)
-Base.convert(::Type{T}, val::NoInit{T}) where {T} = val[]
+@inline Base.getindex(w::NoInit{T}) where {T} = w.val
+@inline Base.setindex!(w::NoInit{T}, val::T) where {T} = (w.val = val; w)
+@inline Base.convert(::Type{NoInit{T}}, val::T) where {T} = NoInit{T}(val)
+@inline Base.convert(::Type{T}, val::NoInit{T}) where {T} = val[]
 
 @inline _deref(v) = v
 @inline _deref(ni::NoInit{T}) where {T} = ni[]
+@inline _deref(r::Ref{T}) where {T} = _deref(r[])
+@inline _set_deref!(v::Ref{T}, val::T) where {T} = v[] = val
+@inline _set_deref!(v::NoInit{T}, val::T) where {T} = v[] = val
+@inline _set_deref!(v::Ref{NoInit{T}}, val) where {T} = _set_deref!(v[], val)

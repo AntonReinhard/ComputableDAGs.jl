@@ -50,7 +50,9 @@ function call_fc(fc::FunctionCall{VectorT,M}, cache::Dict{Symbol,Any}) where {Ve
     return nothing
 end
 
-function expr_from_fc(fc::FunctionCall{VectorT,0}) where {VectorT}
+function expr_from_fc(
+    fc::FunctionCall{VectorT,0}; return_symbol_is_defined=false
+) where {VectorT}
     func_call = Expr(
         :call,
         fc.func,
@@ -62,7 +64,11 @@ function expr_from_fc(fc::FunctionCall{VectorT,0}) where {VectorT}
     )
     access_expr = gen_access_expr(fc)
 
-    return Expr(:(=), access_expr, func_call)
+    return if return_symbol_is_defined
+        Expr(:call, :(ComputableDAGs._set_deref!), access_expr, func_call)
+    else
+        Expr(:(=), access_expr, func_call)
+    end
 end
 
 """
@@ -70,7 +76,9 @@ end
 
 For a given function call, return an expression evaluating it.
 """
-function expr_from_fc(fc::FunctionCall{VectorT,M}) where {VectorT,M}
+function expr_from_fc(
+    fc::FunctionCall{VectorT,M}; return_symbol_is_defined=false
+) where {VectorT,M}
     func_call = Expr(
         :call,
         fc.func,
@@ -83,7 +91,13 @@ function expr_from_fc(fc::FunctionCall{VectorT,M}) where {VectorT,M}
     )
     access_expr = gen_access_expr(fc)
 
-    return Expr(:(=), access_expr, func_call)
+    return if return_symbol_is_defined
+        Expr(
+            :call, :(ComputableDAGs._set_deref!), Expr(:call, :Ref, access_expr), func_call
+        )
+    else
+        Expr(:(=), access_expr, func_call)
+    end
 end
 
 """
@@ -193,30 +207,41 @@ function gen_function_body(tape::Tape; closures_size::Int)
 
         intersect!(ret_symbols_set, undefined_argument_symbols)
 
+        let_blocks = Expr[]
+        compute_calls = Expr[]
+
         # generate the local inits, which is exactly the return symbol set, but with type information
         # this can probably be done better (more performant and without an extra loop)
         for fc in code_block
-            if !(gen_access_expr(fc) in ret_symbols_set)
+            access_expr = gen_access_expr(fc)
+            if !(access_expr in ret_symbols_set)
+                push!(compute_calls, expr_from_fc(fc))
                 continue
             end
             push!(local_inits, gen_uninit_local(fc))
+            push!(let_blocks, Expr(:(=), access_expr, Expr(:call, :Ref, access_expr)))
+            push!(compute_calls, expr_from_fc(fc; return_symbol_is_defined=true))
         end
 
         closure = Expr(
             :block,
             local_inits...,
             Expr(
-                :call,                                  # call to the following closure (no arguments)
+                :call,                                      # call to the following closure (no arguments)
+                #=Expr(
+                    :let,                                   # let block around closure definition
+                    Expr(:block, let_blocks...),            # let statements=#
                 Expr(                                   # create the closure: () -> code block; return (locals)
                     :->,
                     :(),
                     Expr(                               # actual function body of the closure
                         :block,
-                        closure_inits...,                 # declare local variables with type information inside the closure
-                        expr_from_fc.(code_block)...,
+                        closure_inits...,               # declare local variables with type information inside the closure
+                        compute_calls...,
                         Expr(:return, :nothing),
                     ),
                 ),
+                #=),=#
             ),
         )
 

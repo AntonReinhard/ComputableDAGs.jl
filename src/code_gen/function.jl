@@ -42,7 +42,13 @@ function get_compute_function(
             Symbol("compute_$functionId"),
             Expr(:(::), :data_input, input_type(instance)),
         ), # function name and parameters
-        Expr(:block, initCaches, assignInputs, code, Expr(:return, resSym)), # function body
+        Expr(
+            :block,
+            initCaches,
+            assignInputs,
+            code,
+            Expr(:return, Expr(:call, :(ComputableDAGs._deref), resSym)),    # deref the return value
+        ), # function body
     )
 
     return RuntimeGeneratedFunction(@__MODULE__, context_module, expr)
