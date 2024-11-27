@@ -36,8 +36,6 @@ function profile(instance, input, optimizer, closures_size)
         g, instance, cpu_st(), @__MODULE__; closures_size=closures_size
     )
 
-    println(f)
-
     tic = time_ns()
     f(input)
     toc = time_ns()
@@ -47,7 +45,7 @@ function profile(instance, input, optimizer, closures_size)
 
     return (
         instance=string(instance),
-        optimizer=optimizer,
+        optimizer=string(optimizer),
         closures_size=closures_size,
         b_gen=b_gen,
         t_optimization=t_optimization,
