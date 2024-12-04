@@ -69,10 +69,12 @@ SCATTERING_PROCESSES = [
     parse_process("ke->ke", QEDModel()),
     parse_process("kke->ke", QEDModel()),
     parse_process("kkke->ke", QEDModel()),
-    #parse_process("kkkke->ke", QEDModel()),
+    parse_process("kkkke->ke", QEDModel()),
+    parse_process("kkkkke->ke", QEDModel()),
+    parse_process("kkkkkke->ke", QEDModel()),
 ]
 
-CLOSURE_SIZES = (0, 100, 1000)
+CLOSURE_SIZES = (0, 100, 1000, 2000, 5000)
 
 SUITE = BenchmarkGroup()
 SUITE["graph_gen"] = BenchmarkGroup()
@@ -87,8 +89,11 @@ for INSTANCE in SCATTERING_PROCESSES
 
     g = graph(INSTANCE)
 
+    SUITE["f_gen"][string(INSTANCE)] = BenchmarkGroup()
+    SUITE["f_exec"][string(INSTANCE)] = BenchmarkGroup()
+
     for CLOSURE_SIZE in CLOSURE_SIZES
-        SUITE["f_gen"][string(CLOSURE_SIZE)] = @benchmarkable get_compute_function(
+        SUITE["f_gen"][string(INSTANCE)][string(CLOSURE_SIZE)] = @benchmarkable get_compute_function(
             g_, proc, machine, @__MODULE__; closures_size=CS
         ) setup = (g_ = $g; proc = $INSTANCE; machine = cpu_st(); CS = $CLOSURE_SIZE)
 
@@ -104,7 +109,7 @@ for INSTANCE in SCATTERING_PROCESSES
             g, INSTANCE, cpu_st(), @__MODULE__; closures_size=CLOSURE_SIZE
         )
 
-        SUITE["f_exec"][string(CLOSURE_SIZE)] = @benchmarkable f(input) setup = (
+        SUITE["f_exec"][string(INSTANCE)][string(CLOSURE_SIZE)] = @benchmarkable f(input) setup = (
             f = $func; input = $psp
         )
     end
