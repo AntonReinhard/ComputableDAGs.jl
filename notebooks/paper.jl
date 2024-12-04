@@ -57,14 +57,23 @@ function profile(instance, input, optimizer, closures_size)
 end
 
 function make_nphoton_compton(n::Int, all_combs::Bool)
+    spin = all_combs ? AllSpin() : SpinUp()
+    pol = all_combs ? AllPol() : PolX()
     return ScatteringProcess(
-        (Electron(), ntuple(_ -> Photon(), n)...),     # incoming particles
-        (Electron(), Photon()),                        # outgoing particles
-        (
-            all_combs ? AllSpin() : SpinUp(),
-            ntuple(_ -> all_combs ? AllPol() : PolX(), n)...,
-        ),  # incoming particle spin/pols
-        (all_combs ? AllSpin() : SpinUp(), all_combs ? AllPol() : PolX()),                         # outgoing particle spin/pols
+        (Electron(), ntuple(_ -> Photon(), n)...),  # incoming particles
+        (Electron(), Photon()),                     # outgoing particles
+        (spin, ntuple(_ -> pol, n)...),             # incoming particle spin/pols
+        (spin, pol),                                # outgoing particle spin/pols
+    )
+end
+
+function make_npair_trident(n::Int, all_combs::Bool)
+    spin = all_combs ? AllSpin() : SpinUp()
+    return ScatteringProcess(
+        (Electron(), Positron()),
+        (ntuple(_ -> Electron(), n)..., ntuple(_ -> Positron(), n)...),
+        (spin, spin),
+        (ntuple(_ -> spin, 2n)...,),
     )
 end
 
