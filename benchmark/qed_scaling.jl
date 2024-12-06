@@ -8,6 +8,8 @@ using QEDcore, QEDprocesses
 using Logging
 using JLD2
 
+BenchmarkTools.DEFAULT_PARAMETERS.seconds = 120.0
+
 RuntimeGeneratedFunctions.init(@__MODULE__)
 
 global_logger(NullLogger())
@@ -66,57 +68,54 @@ df = DataFrame()
 MODEL = PerturbativeQED()
 
 SCATTERING_PROCESSES = [
-    parse_process("ke->ke", QEDModel()),
-    parse_process("kke->ke", QEDModel()),
-    parse_process("kkke->ke", QEDModel()),
-    parse_process("kkkke->ke", QEDModel()),
-    parse_process("kkkkke->ke", QEDModel()),
-    parse_process("kkkkkke->ke", QEDModel()),
+    "ke->ke",
+    "kke->ke",
+    "kkke->ke",
+    "kkkke->ke",
+    "kkkkke->ke",
+    "kkkkkke->ke",
+    "kkkkkkke->ke",
 ]
-
-CLOSURE_SIZES = (0, 100, 1000, 2000, 5000)
 
 SUITE = BenchmarkGroup()
 SUITE["graph_gen"] = BenchmarkGroup()
-SUITE["f_gen"] = BenchmarkGroup()
-SUITE["f_exec"] = BenchmarkGroup()
 
-for INSTANCE in SCATTERING_PROCESSES
-    println("$INSTANCE")
-    SUITE["graph_gen"][string(INSTANCE)] = @benchmarkable graph(proc) setup = (
-        proc = $INSTANCE
-    )
+graph_props = Dict{String,GraphProperties}()
+
+for INSTANCE_STR in SCATTERING_PROCESSES
+    INSTANCE = parse_process(INSTANCE_STR, QEDModel())
+    println("$INSTANCE_STR")
+    graph(INSTANCE)
+    SUITE["graph_gen"][INSTANCE_STR] = @benchmarkable graph(proc) setup = (proc = $INSTANCE)
 
     g = graph(INSTANCE)
+    graph_props[INSTANCE_STR] = get_properties(g)
 
-    SUITE["f_gen"][string(INSTANCE)] = BenchmarkGroup()
-    SUITE["f_exec"][string(INSTANCE)] = BenchmarkGroup()
+    SUITE["f_gen"][INSTANCE_STR] = @benchmarkable get_compute_function(
+        g_, proc, machine, @__MODULE__; closures_size=0
+    ) setup = (g_ = $g; proc = $INSTANCE; machine = cpu_st())
 
-    for CLOSURE_SIZE in CLOSURE_SIZES
-        SUITE["f_gen"][string(INSTANCE)][string(CLOSURE_SIZE)] = @benchmarkable get_compute_function(
-            g_, proc, machine, @__MODULE__; closures_size=CS
-        ) setup = (g_ = $g; proc = $INSTANCE; machine = cpu_st(); CS = $CLOSURE_SIZE)
-
-        psp = PhaseSpacePoint(
-            INSTANCE,
-            MODEL,
-            PhasespaceDefinition(SphericalCoordinateSystem(), ElectronRestFrame()),
-            tuple((rand(SFourMomentum) for _ in 1:number_incoming_particles(INSTANCE))...),
-            tuple((rand(SFourMomentum) for _ in 1:number_outgoing_particles(INSTANCE))...),
-        )
-
-        func = get_compute_function(
-            g, INSTANCE, cpu_st(), @__MODULE__; closures_size=CLOSURE_SIZE
-        )
-
-        SUITE["f_exec"][string(INSTANCE)][string(CLOSURE_SIZE)] = @benchmarkable f(input) setup = (
-            f = $func; input = $psp
-        )
+    if graph_props[INSTANCE_STR].number_of_nodes > 30000
+        continue
     end
+
+    psp = PhaseSpacePoint(
+        INSTANCE,
+        MODEL,
+        PhasespaceDefinition(SphericalCoordinateSystem(), ElectronRestFrame()),
+        tuple((rand(SFourMomentum) for _ in 1:number_incoming_particles(INSTANCE))...),
+        tuple((rand(SFourMomentum) for _ in 1:number_outgoing_particles(INSTANCE))...),
+    )
+
+    func = get_compute_function(g, INSTANCE, cpu_st(), @__MODULE__; closures_size=0)
+
+    SUITE["f_exec"][INSTANCE_STR] = @benchmarkable f(input) setup = (
+        f = $func; input = $psp
+    )
 end
 
 tune!(SUITE)
 result = run(SUITE; verbose=true)
 
 BenchmarkTools.save("bench.json", result)
-@save "bench.jld2" result
+@save "bench.jld2" result graph_props
