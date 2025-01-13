@@ -86,14 +86,16 @@ for INSTANCE_STR in SCATTERING_PROCESSES
     INSTANCE = parse_process(INSTANCE_STR, QEDModel())
     println("$INSTANCE_STR")
     graph(INSTANCE)
-    SUITE["graph_gen"][INSTANCE_STR] = @benchmarkable graph(proc) setup = (proc = $INSTANCE)
+    SUITE["graph_gen"][INSTANCE_STR] = @benchmarkable graph(proc) setup = (
+        proc = $INSTANCE; GC.gc()
+    )
 
     g = graph(INSTANCE)
     graph_props[INSTANCE_STR] = get_properties(g)
 
     SUITE["f_gen"][INSTANCE_STR] = @benchmarkable get_compute_function(
         g_, proc, machine, @__MODULE__; closures_size=0
-    ) setup = (g_ = $g; proc = $INSTANCE; machine = cpu_st())
+    ) setup = (g_ = $g; proc = $INSTANCE; machine = cpu_st(); GC.gc())
 
     if graph_props[INSTANCE_STR].number_of_nodes > 30000
         continue
@@ -110,7 +112,7 @@ for INSTANCE_STR in SCATTERING_PROCESSES
     func = get_compute_function(g, INSTANCE, cpu_st(), @__MODULE__; closures_size=0)
 
     SUITE["f_exec"][INSTANCE_STR] = @benchmarkable f(input) setup = (
-        f = $func; input = $psp
+        f = $func; input = $psp; GC.gc()
     )
 end
 
