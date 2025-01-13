@@ -62,7 +62,7 @@ result = BenchmarkTools.load("bench.json")[1]
 
 data = result["graph_gen"]
 l = length(data)
-P = violin(
+P = boxplot(
     _to_vec.([(1:l)...]),
     getfield.(getindex.(Ref(data), SCATTERING_PROCESSES[1:l]), :times);
     yscale=:log10,
@@ -70,6 +70,7 @@ P = violin(
     #yguide="t",
     xguide="number of incoming photons",
     legend=false,
+    outliers=false,
 )
 xticks!(P, [(1:l)...], proc_str.(SCATTERING_PROCESSES[1:l]))
 yticks!(P, yticks1, yticks2)
@@ -78,7 +79,7 @@ savefig(joinpath(plotpath, "graph_gen_compton.pdf"))
 
 data = result["f_exec"]
 l = length(data)
-P = violin(
+P = boxplot(
     _to_vec.([(1:l)...]),
     getfield.(getindex.(Ref(data), SCATTERING_PROCESSES[1:l]), :times);
     yscale=:log10,
@@ -86,6 +87,7 @@ P = violin(
     #yguide="t",
     xguide="number of incoming photons",
     legend=false,
+    outliers=false,
 )
 xticks!(P, [(1:l)...], proc_str.(SCATTERING_PROCESSES[1:l]))
 yticks!(P, yticks1, yticks2)
@@ -94,7 +96,7 @@ savefig(joinpath(plotpath, "f_exec_compton.pdf"))
 
 data = result["f_gen"]
 l = length(data)
-P = violin(
+P = boxplot(
     _to_vec.([(1:l)...]),
     getfield.(getindex.(Ref(data), SCATTERING_PROCESSES[1:l]), :times);
     yscale=:log10,
@@ -102,6 +104,7 @@ P = violin(
     #yguide="t",
     xguide="number of incoming photons",
     legend=false,
+    outliers=false,
 )
 xticks!(P, [(1:l)...], proc_str.(SCATTERING_PROCESSES[1:l]))
 yticks!(P, yticks1, yticks2)
