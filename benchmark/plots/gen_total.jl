@@ -24,11 +24,8 @@ data_compile = median.(data_compile)
 data_graph_gen = data_graph_gen[1:l]
 data_fgen = data_fgen[1:l]
 
-# normalize
+# sum
 data_sum = data_compile .+ data_graph_gen .+ data_fgen
-data_compile ./= data_sum / 100.0
-data_graph_gen ./= data_sum / 100.0
-data_fgen ./= data_sum / 100.0
 
 # plot
 f = Figure()
@@ -36,8 +33,8 @@ f = Figure()
 ax = Axis(
     f[1, 1];
     xlabel="number of incoming photons",
-    ylabel="total time",
-    limits=(nothing, _find_y_lims(data_sum)),
+    ylabel="time",
+    limits=(nothing, _find_y_lims([data_sum, data_compile, data_graph_gen, data_fgen])),
     yminorgridvisible=true,
     yminorticksvisible=true,
     yminorticks=IntervalsBetween(10),
@@ -46,44 +43,14 @@ ax = Axis(
     yticks=(yticks1, yticks2),
 )
 
-sc = scatter!(ax, [(1:l)...], data_sum)
-
-ax2 = Axis(
-    f[1, 1];
-    yaxisposition=:right,
-    ylabel="ratios of time taken",
-    limits=(nothing, (0, 100)),
-    yticks=([0, 50, 100], [L"0%", L"50%", L"100%"]),
-)
-hidespines!(ax2)
-hidexdecorations!(ax2)
-linkxaxes!(ax, ax2)
-
-colors = Makie.wong_colors()
-
-categories = repeat(1:l, 3)
-height = [
-    data_graph_gen
-    data_fgen
-    data_compile
-]
-grp = vcat([[i for _ in 1:l] for i in 1:3]...)
-
-barplot!(#
-    ax2,
-    categories,
-    height;
-    stack=grp,
-    color=colors[grp],
-    alpha=0.3,
-)
+sc_sum = scatter!(ax, [(1:l)...], data_sum; markersize=12, marker=:star5)
+sc_compile = scatter!(ax, [(1:l)...], data_compile)
+sc_graph_gen = scatter!(ax, [(1:l)...], data_graph_gen)
+sc_fgen = scatter!(ax, [(1:l)...], data_fgen)
 
 # Legend
-labels = ["CDAG Generation", "Function Generation", "Function Compilation", "Total Time"]
-elements = [
-    [PolyElement(; polycolor=colors[i]) for i in 1:(length(labels) - 1)]
-    sc
-]
+labels = ["Total Time", "Function Compilation", "Function Generation", "CDAG Generation"]
+elements = [sc_sum, sc_compile, sc_fgen, sc_graph_gen]
 
 Legend(f[1, 2], elements, labels)
 
