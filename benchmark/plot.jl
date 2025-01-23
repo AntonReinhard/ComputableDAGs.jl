@@ -63,12 +63,14 @@ include("plots/graph_gen.jl")
 
 include("plots/f_gen.jl")
 
-include("plots/f_gen.jl")
+include("plots/f_exec.jl")
 
 include("plots/f_gen_per_line.jl")
 
 include("plots/graph_size.jl")
 
 include("plots/compile_time.jl")
+
+include("plots/gen_total.jl")
 
 # TODO framestyle box (wenn eine achse)
