@@ -15,12 +15,24 @@ function _find_y_lims(data::BenchmarkTools.BenchmarkGroup)
     return (ymin, ymax)
 end
 
-function _find_y_lims(data::Vector{<:Number})
+function _find_y_lims(data::AbstractVector{<:Number})
     y_min = minimum(data)
     y_min = 10^floor(log10(y_min))
 
     y_max = maximum(data)
     y_max = 10^ceil(log10(y_max))
+
+    return (y_min, y_max)
+end
+
+function _find_y_lims(data::AbstractVector{T}) where {T}
+    local y_min = Inf64
+    local y_max = -Inf64
+    for t in data
+        (y_min_n, y_max_n) = _find_y_lims(t)
+        y_min = min(y_min_n, y_min)
+        y_max = max(y_max_n, y_max)
+    end
 
     return (y_min, y_max)
 end
