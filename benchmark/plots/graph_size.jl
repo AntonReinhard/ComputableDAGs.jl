@@ -19,7 +19,7 @@ ax = Axis(
     xticks=([(1:l)...], proc_str.(SCATTERING_PROCESSES[1:l])),
 )
 
-scatter!(ax, [(1:l)...], data)
+sc = scatter!(ax, [(1:l)...], data)
 
 save(joinpath(plotpath, "graph_size_compton.pdf"), f)
 
@@ -66,8 +66,11 @@ barplot!(#
 )
 
 # Legend
-labels = ["Data", "U", "V", "S1", "S2", "Sum"]
-elements = [PolyElement(; polycolor=colors[i]) for i in 1:length(labels)]
+labels = ["Data", "U", "V", "S1", "S2", "Sum", "Total"]
+elements = [
+    [PolyElement(; polycolor=colors[i]) for i in 1:(length(labels) - 1)]
+    sc
+]
 title = "Task Types"
 
 Legend(f[1, 2], elements, labels, title)
