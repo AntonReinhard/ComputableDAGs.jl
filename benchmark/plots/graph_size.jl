@@ -38,8 +38,11 @@ ax2 = Axis(
     yaxisposition=:right,
     ylabel="ratios of node types",
     limits=(nothing, (0, 100)),
+    ygridvisible=false,
+    yminorgridvisible=false,
+    yminorticksvisible=true,
     yticks=([0, 50, 100], [L"0%", L"50%", L"100%"]),
-    xticks=([(1:l)...], proc_str.(SCATTERING_PROCESSES[1:l])),
+    yminorticks=IntervalsBetween(5),
 )
 hidespines!(ax2)
 hidexdecorations!(ax2)
@@ -61,15 +64,15 @@ barplot!(#
     categories,
     height;
     stack=grp,
-    color=colors[grp],
+    color=colors[grp .+ 1],
     alpha=0.3,
 )
 
 # Legend
-labels = ["Data", "U", "V", "S1", "S2", "Sum", "Total"]
+labels = ["Total", "Data", "U", "V", "S1", "S2", "Sum"]
 elements = [
-    [PolyElement(; polycolor=colors[i]) for i in 1:(length(labels) - 1)]
     sc
+    [PolyElement(; polycolor=colors[i]) for i in 2:(length(labels))]
 ]
 title = "Task Types"
 
