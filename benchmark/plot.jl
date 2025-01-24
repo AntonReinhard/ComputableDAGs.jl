@@ -1,5 +1,5 @@
 using Pkg: Pkg
-Pkg.activate(".")
+Pkg.activate("..")
 
 using ComputableDAGs
 using QEDFeynman
@@ -16,14 +16,14 @@ jsonfile = "bench.json"
 
 include("utils.jl")
 
-plotpath = "plots"
+plotpath = "plots_abc"
 if !isdir(plotpath)
     mkdir(plotpath)
 end
 
 _to_vec(s) = [s]
 
-function proc_str(s::String)
+#=function proc_str(s::String)
     s = replace(s, "e" => "e^-")
     s = replace(s, "k" => "γ")
 
@@ -35,6 +35,17 @@ function proc_str(s::String)
     end
 
     return L"%$(k_count)"
+end=#
+
+function proc_str(s::String)
+    (prefix, suffix) = split(s, "->")
+    b_count = count(c -> c == 'B', suffix)
+
+    if b_count > 1
+        prefix = replace(prefix, r"B+" => "B^$b_count")
+    end
+
+    return L"%$(b_count)"
 end
 
 yticks1 = [1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13]
@@ -55,9 +66,11 @@ yticks2 = [
     L"10ks",
 ]
 
-SCATTERING_PROCESSES = [
+#=SCATTERING_PROCESSES = [
     "ke->ke", "kke->ke", "kkke->ke", "kkkke->ke", "kkkkke->ke", "kkkkkke->ke", "kkkkkkke->ke", "kkkkkkkke->ke"
-]
+]=#
+
+SCATTERING_PROCESSES = ["AB->AB", "AB->ABBB", "AB->ABBBBB", "AB->ABBBBBBB"]
 
 include("plots/graph_gen.jl")
 
@@ -72,5 +85,3 @@ include("plots/graph_size.jl")
 include("plots/compile_time.jl")
 
 include("plots/gen_total.jl")
-
-# TODO framestyle box (wenn eine achse)

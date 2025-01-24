@@ -1,7 +1,7 @@
 # == Graph Size ==
 @load "bench.jld2"
 
-colors = Makie.wong_colors()
+colors = Makie.to_colormap(:tab10)
 
 data = getfield.(getindex.(Ref(graph_props), SCATTERING_PROCESSES), :number_of_nodes)
 l = length(data)
@@ -48,16 +48,17 @@ hidespines!(ax2)
 hidexdecorations!(ax2)
 linkxaxes!(ax, ax2)
 
-categories = repeat(1:l, length(keys(data[end])))
+categories = repeat(1:l, 7)
 height = [
     [d[ComputableDAGs.DataTask] for d in data]
-    [d[ComputeTaskQED_U] for d in data]
-    [d[ComputeTaskQED_V] for d in data]
-    [get(d, ComputeTaskQED_S1, zero(Float64)) for d in data]
-    [d[ComputeTaskQED_S2] for d in data]
-    [d[ComputeTaskQED_Sum] for d in data]
+    [d[ComputeTaskABC_P] for d in data]
+    [d[ComputeTaskABC_U] for d in data]
+    [d[ComputeTaskABC_V] for d in data]
+    [get(d, ComputeTaskABC_S1, zero(Float64)) for d in data]
+    [d[ComputeTaskABC_S2] for d in data]
+    [d[ComputeTaskABC_Sum] for d in data]
 ]
-grp = vcat([[i for _ in 1:l] for i in 1:6]...)
+grp = vcat([[i for _ in 1:l] for i in 1:7]...)
 
 barplot!(#
     ax2,
@@ -69,7 +70,7 @@ barplot!(#
 )
 
 # Legend
-labels = ["Total", "Data", "U", "V", "S1", "S2", "Sum"]
+labels = ["Total", "Data", "P", "U", "V", "S1", "S2", "Sum"]
 elements = [
     sc
     [PolyElement(; polycolor=colors[i]) for i in 2:(length(labels))]
