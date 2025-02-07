@@ -4,7 +4,6 @@ using Pkg
 Pkg.develop(; path="/home/reinha57/repos/QEDFeynman.jl/")
 using QEDFeynman
 using RuntimeGeneratedFunctions
-using DataFrames
 using BenchmarkTools
 using QEDcore, QEDprocesses
 using Logging
@@ -15,53 +14,6 @@ BenchmarkTools.DEFAULT_PARAMETERS.seconds = 120.0
 RuntimeGeneratedFunctions.init(@__MODULE__)
 
 global_logger(NullLogger())
-
-#=
-function profile(instance, input, optimizer, closures_size)
-    b_gen = @benchmark graph($instance)
-    g = graph(instance)
-
-    if !isnothing(optimizer)
-        # compile run first
-        begin
-            g_temp = graph(instance)
-            optimize_to_fixpoint!(optimizer, g_temp)
-        end
-
-        t_optimization = @elapsed optimize_to_fixpoint!(optimizer, g)
-    else
-        t_optimization = 0.0
-    end
-
-    g_props = get_properties(g)
-
-    b_fgen = @benchmark get_compute_function(
-        $g, $instance, cpu_st(), @__MODULE__; closures_size=$closures_size
-    )
-    f = get_compute_function(
-        g, instance, cpu_st(), @__MODULE__; closures_size=closures_size
-    )
-
-    tic = time_ns()
-    f(input)
-    toc = time_ns()
-    t_compile = toc - tic
-
-    b_exec = @benchmark $f($input)
-
-    return (
-        instance=string(instance),
-        optimizer=string(optimizer),
-        closures_size=closures_size,
-        b_gen=b_gen,
-        t_optimization=t_optimization,
-        g_props=g_props,
-        b_fgen=b_fgen,
-        t_compile=t_compile,
-        b_exec=b_exec,
-    )
-end
-=#
 
 function time_compilation(expr; setup=nothing)
     ps = addprocs(1)
@@ -91,8 +43,6 @@ function bench_compilation(expr; setup=nothing, n=20)
 end
 
 # ------------------
-
-df = DataFrame()
 
 MODEL = PerturbativeQED()
 
@@ -173,5 +123,5 @@ end
 tune!(SUITE)
 result = run(SUITE; verbose=true)
 
-BenchmarkTools.save("bench.json", result)
-@save "bench.jld2" result graph_props node_dicts comp_times
+BenchmarkTools.save("data/bench.json", result)
+@save "data/bench.jld2" result graph_props node_dicts comp_times
