@@ -4,7 +4,6 @@ using Pkg
 Pkg.develop(; path="/home/reinha57/repos/QEDFeynman.jl/")
 using QEDFeynman
 using RuntimeGeneratedFunctions
-using DataFrames
 using BenchmarkTools
 using QEDcore, QEDprocesses
 using Logging
@@ -44,8 +43,6 @@ function bench_compilation(expr; setup=nothing, n=20)
 end
 
 # ------------------
-
-df = DataFrame()
 
 MODEL = PerturbativeABC()
 
@@ -126,5 +123,5 @@ end
 tune!(SUITE)
 result = run(SUITE; verbose=true)
 
-BenchmarkTools.save("bench.json", result)
-@save "bench.jld2" result graph_props node_dicts comp_times
+BenchmarkTools.save("data/bench.json", result)
+@save "data/bench.jld2" result graph_props node_dicts comp_times
