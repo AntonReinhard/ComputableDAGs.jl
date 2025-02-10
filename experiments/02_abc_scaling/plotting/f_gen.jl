@@ -4,7 +4,7 @@
 data = result["f_gen"]
 l = length(data)
 data = getfield.(getindex.(Ref(data), SCATTERING_PROCESSES[1:l]), :times)
-data = mean.(data)
+data = median.(data)
 
 f = Figure()
 ax = Axis(
