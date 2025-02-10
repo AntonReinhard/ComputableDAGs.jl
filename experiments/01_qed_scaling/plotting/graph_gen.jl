@@ -3,7 +3,7 @@ result = BenchmarkTools.load(jsonfile)[1]
 data = result["graph_gen"]
 l = length(data)
 data = getfield.(getindex.(Ref(data), SCATTERING_PROCESSES[1:l]), :times)
-data = mean.(data)
+data = median.(data)
 
 f = Figure()
 ax = Axis(
@@ -19,6 +19,6 @@ ax = Axis(
     yticks=(yticks1, yticks2),
 )
 
-scatter!(ax, [(1:l)...], data)
+scatter!(ax, [(1:l)...], data; markersize=15)
 
 save(joinpath(plotpath, "graph_gen_compton.pdf"), f)
