@@ -11,7 +11,7 @@ for dict in getindex.(Ref(node_dicts), SCATTERING_PROCESSES)
     push!(data, new_dict)
 end
 
-f = Figure()
+f = Figure(; size=(600, 500))
 ax = Axis(
     f[1, 1];
     yaxisposition=:right,
@@ -65,7 +65,7 @@ ax2 = Axis(
 )
 linkxaxes!(ax, ax2)
 
-sc = scatter!(ax2, [(1:l)...], data)
+sc = scatter!(ax2, [(1:l)...], data; markersize=15)
 
 # Legend
 labels = ["Total", "Data", "U", "V", "S1", "S2", "Sum"]
@@ -75,6 +75,6 @@ elements = [
 ]
 title = "Task Types"
 
-Legend(f[1, 2], elements, labels, title)
+Legend(f[2, 1], elements, labels, title; tellheight=true, tellwidth=false, orientation=:horizontal)
 
 save(joinpath(plotpath, "graph_size_compton_w_ratio.pdf"), f)
