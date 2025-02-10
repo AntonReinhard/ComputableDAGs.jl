@@ -32,7 +32,7 @@ barplot!(ax, [(1:l)...], data; color=colors[2])
 data = result["f_exec"]
 l = length(data)
 data = getfield.(getindex.(Ref(data), SCATTERING_PROCESSES[1:l]), :times)
-data = mean.(data)
+data = median.(data)
 
 ax2 = Axis(
     f[1, 1];
