@@ -37,24 +37,6 @@ function proc_str(s::String)
     return L"%$(k_count)"
 end
 
-yticks1 = [1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13]
-yticks2 = [
-    L"1ns",
-    L"10ns",
-    L"100ns",
-    L"1μs",
-    L"10μs",
-    L"100μs",
-    L"1ms",
-    L"10ms",
-    L"100ms",
-    L"1s",
-    L"10s",
-    L"100s",
-    L"1ks",
-    L"10ks",
-]
-
 SCATTERING_PROCESSES = [
     "ke->ke", "kke->ke", "kkke->ke", "kkkke->ke", "kkkkke->ke", "kkkkkke->ke", "kkkkkkke->ke", "kkkkkkkke->ke"
 ]
