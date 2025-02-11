@@ -47,7 +47,7 @@ for PROC in SCATTERING_PROCESSES
     ax2 = Axis(
         f[1, 1];
         yaxisposition=:right,
-        ylabel="FLOPS",
+        ylabel="FLOPs",
         limits=(nothing, _find_y_lims(data_flops)),
         yminorgridvisible=true,
         yminorticksvisible=true,
@@ -62,7 +62,7 @@ for PROC in SCATTERING_PROCESSES
     sc_flops = plot!(ax2, STEPS, data_flops; markersize=12, color=colors[3])
 
     # Legend
-    labels = ["CPU, $N Elements", "GPU, $N Elements", "FLOPS"]
+    labels = ["CPU, 1 Element", "GPU, $N Elements", "FLOPs"]
     elements = [sc_cpu, sc_gpu, sc_flops]
 
     Legend(
