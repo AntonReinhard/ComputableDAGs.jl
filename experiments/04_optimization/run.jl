@@ -18,8 +18,8 @@ RuntimeGeneratedFunctions.init(@__MODULE__)
 MODEL = PerturbativeQED()
 
 SCATTERING_PROCESSES = [
-    "ke->ke",               # 1
-    "kke->ke",              # 2
+    #"ke->ke",               # 1
+    #"kke->ke",              # 2
     "kkke->ke",             # 3
     "kkkke->ke",            # 4
     "kkkkke->ke",           # 5
@@ -33,7 +33,7 @@ graph_props = Dict{String,Vector{Tuple{Int,GraphProperties}}}()
 
 @info "== Reductions benchmark =="
 
-N = 1024
+N = 16384
 for INSTANCE_STR in SCATTERING_PROCESSES
     INSTANCE = parse_process(INSTANCE_STR, QEDModel())
     @info "$INSTANCE_STR"
@@ -71,7 +71,11 @@ for INSTANCE_STR in SCATTERING_PROCESSES
     push!(graph_props[INSTANCE_STR], (steps, get_properties(g)))
     func = get_compute_function(g, INSTANCE, cpu_st(), @__MODULE__; closures_size=0)
     func(input)
+    cu_func = eval(kernel(CUDAGPU, g, INSTANCE, @__MODULE__))
     INSTANCE_SUITE["CPU"][steps] = @benchmark $func($input)
+    INSTANCE_SUITE["GPU"][steps] = @benchmark (CUDA.@sync (@cuda threads = t blocks = b always_inline = true k(
+        in, out, n
+    ))) setup = (n = $N; t = 32; b = $N ÷ 32; k = $cu_func; in = $cu_inputs; out = $cu_outputs)
     INSTANCE_SUITE["OPTIM"][steps] = @benchmark optimize!(ReductionOptimizer(), g_temp, STEP_SIZE) setup = (
         g_temp = graph($INSTANCE)
     )

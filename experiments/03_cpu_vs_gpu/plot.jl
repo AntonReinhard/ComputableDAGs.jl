@@ -64,4 +64,6 @@ SCATTERING_PROCESSES = [
     "kkkkkke->ke",          # 6
 ]
 
-include("plotting/cpu_vs_gpu_exec.jl")
+with_theme(theme_latexfonts()) do
+    include("plotting/cpu_vs_gpu_exec.jl")
+end
