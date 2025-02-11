@@ -24,6 +24,7 @@ SCATTERING_PROCESSES = [
     "kkkke->ke",            # 4
     "kkkkke->ke",           # 5
     "kkkkkke->ke",          # 6
+    #"kkkkkkke->ke",         # 7 -> StackOverflow
 ]
 
 SUITE = BenchmarkGroup()
@@ -32,7 +33,7 @@ graph_props = Dict{String,GraphProperties}()
 
 @info "== CPU vs GPU benchmark =="
 
-N = 1024
+N = 16384
 for INSTANCE_STR in SCATTERING_PROCESSES
     INSTANCE = parse_process(INSTANCE_STR, QEDModel())
     @info "$INSTANCE_STR"
