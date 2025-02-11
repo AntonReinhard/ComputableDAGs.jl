@@ -25,7 +25,7 @@ for PROC in SCATTERING_PROCESSES
     ax = Axis(
         f[1, 1];
         xlabel="number of optimization steps",
-        ylabel="function execution time ($N elements)",
+        ylabel="function execution time",
         limits=(nothing, _find_y_lims([data_cpu, data_gpu])),
         yminorgridvisible=true,
         yminorticksvisible=true,
@@ -41,7 +41,7 @@ for PROC in SCATTERING_PROCESSES
     sc_gpu = plot!(ax, STEPS, data_gpu; markersize=12)
 
     # Legend
-    labels = ["CPU, $N Elements", "GPU, $N Elements"]
+    labels = ["CPU, 1 Element", "GPU, $N Elements"]
     elements = [sc_cpu, sc_gpu]
 
     Legend(
