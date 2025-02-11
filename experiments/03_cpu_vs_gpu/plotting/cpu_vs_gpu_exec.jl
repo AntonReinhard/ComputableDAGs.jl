@@ -19,7 +19,7 @@ f = Figure()
 ax = Axis(
     f[1, 1];
     xlabel="number of incoming photons",
-    ylabel="function execution time (1024 elements)",
+    ylabel="function execution time",
     limits=(nothing, _find_y_lims([data_cpu, data_gpu])),
     yminorgridvisible=true,
     yminorticksvisible=true,
@@ -33,7 +33,7 @@ sc_cpu = scatter!(ax, [(1:l)...], data_cpu; markersize=12)
 sc_gpu = scatter!(ax, [(1:l)...], data_gpu; markersize=12)
 
 # Legend
-labels = ["CPU, 1024 Elements", "GPU, 1024 Elements"]
+labels = ["CPU, 1 Element", "GPU, $N Elements"]
 elements = [sc_cpu, sc_gpu]
 
 Legend(f[1, 1], elements, labels; tellheight=false, tellwidth=false, margin=(10, 10, 10, 10), halign=:left, valign=:top)
