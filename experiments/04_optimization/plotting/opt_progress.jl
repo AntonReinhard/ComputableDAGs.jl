@@ -21,7 +21,7 @@ for PROC in SCATTERING_PROCESSES
     data_gpu = getfield.(data_gpu, :times)
     data_gpu = median.(data_gpu)
 
-    f = Figure()
+    f = Figure(; size=(600, 500))
     ax = Axis(
         f[1, 1];
         xlabel="number of optimization steps",
@@ -45,14 +45,15 @@ for PROC in SCATTERING_PROCESSES
     elements = [sc_cpu, sc_gpu]
 
     Legend(
-        f[1, 1],
+        f[2, 1],
         elements,
         labels;
-        tellheight=false,
+        tellheight=true,
         tellwidth=false,
         margin=(10, 10, 10, 10),
         halign=:left,
         valign=:bottom,
+        orientation=:horizontal,
     )
 
     save(joinpath(plotpath, "opt_progress", "opt_progress_$(proc_n(PROC)).pdf"), f)
