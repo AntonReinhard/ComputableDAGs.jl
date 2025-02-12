@@ -16,13 +16,14 @@ function ComputableDAGs.kernel(
             if (id > n)
                 return
             end
-            @inline input = input_vector[id]
+            @inbounds input = input_vector[id]
             $(assign_inputs)
             $code
-            @inline output_vector[id] = $(tape.output_symbol)
+            @inbounds output_vector[id] = $(tape.output_symbol)
             return nothing
         end"
     )
+    #!format: on
 
     return expr
 end

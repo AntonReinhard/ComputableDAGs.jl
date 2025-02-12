@@ -22,7 +22,7 @@ SCATTERING_PROCESSES = [
     #"kke->ke",              # 2
     "kkke->ke",             # 3
     "kkkke->ke",            # 4
-    "kkkkke->ke",           # 5
+    #"kkkkke->ke",           # 5
 ]
 
 STEP_SIZE = 10
@@ -37,6 +37,7 @@ N = 16384
 for INSTANCE_STR in SCATTERING_PROCESSES
     INSTANCE = parse_process(INSTANCE_STR, QEDModel())
     @info "$INSTANCE_STR"
+    flush(stdout)
 
     INSTANCE_SUITE = BenchmarkGroup()
     INSTANCE_SUITE["CPU"] = BenchmarkGroup()
@@ -73,8 +74,10 @@ for INSTANCE_STR in SCATTERING_PROCESSES
     func(input)
     cu_func = eval(kernel(CUDAGPU, g, INSTANCE, @__MODULE__))
     INSTANCE_SUITE["CPU"][steps] = @benchmark $func($input)
-    INSTANCE_SUITE["GPU"][steps] = @benchmark (CUDA.@sync (@cuda threads = t blocks = b always_inline = true k(
-        in, out, n
+    INSTANCE_SUITE["GPU"][steps] = @benchmark (CUDA.@sync (@cuda threads = t blocks = b k( #=always_inline = true=#
+        in,
+        out,
+        n,
     ))) setup = (n = $N; t = 32; b = $N ÷ 32; k = $cu_func; in = $cu_inputs; out = $cu_outputs)
     INSTANCE_SUITE["OPTIM"][steps] = @benchmark optimize!(ReductionOptimizer(), g_temp, STEP_SIZE) setup = (
         g_temp = graph($INSTANCE)
@@ -94,14 +97,20 @@ for INSTANCE_STR in SCATTERING_PROCESSES
             g_temp = graph($INSTANCE); optimize!(ReductionOptimizer(), g_temp, $steps) # generate and reduce up to that point
         )
         INSTANCE_SUITE["CPU"][steps] = @benchmark $func($input)
-        INSTANCE_SUITE["GPU"][steps] = @benchmark (CUDA.@sync (@cuda threads = t blocks = b always_inline = true k(
-            in, out, n
+        INSTANCE_SUITE["GPU"][steps] = @benchmark (CUDA.@sync (@cuda threads = t blocks = b k( #=always_inline = true=#
+            in,
+            out,
+            n,
         ))) setup = (n = $N; t = 32; b = $N ÷ 32; k = $cu_func; in = $cu_inputs; out = $cu_outputs)
     end
 
     @info "    Steps: $steps"
+    flush(stdout)
 
     SUITE[INSTANCE_STR] = INSTANCE_SUITE
+
+    result = SUITE
+    @save "data/bench.jld2" result graph_props N
 end
 
 result = SUITE
