@@ -33,7 +33,7 @@ sc_cpu = scatter!(ax, [(1:l)...], data_cpu; markersize=12)
 sc_gpu = scatter!(ax, [(1:l)...], data_gpu; markersize=12)
 
 # Legend
-labels = [L"CPU, $%$N$ Element", L"GPU, $%$N$ Elements"]
+labels = [L"CPU, $%$N$ Elements", L"GPU, $%$N$ Elements"]
 elements = [sc_cpu, sc_gpu]
 
 Legend(f[1, 1], elements, labels; tellheight=false, tellwidth=false, margin=(10, 10, 10, 10), halign=:left, valign=:top)
