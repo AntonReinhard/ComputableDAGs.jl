@@ -110,9 +110,9 @@ for INSTANCE_STR in SCATTERING_PROCESSES
     SUITE[INSTANCE_STR] = INSTANCE_SUITE
 
     result = SUITE
-    @save "data/bench.jld2" result graph_props N
+    @save "data/bench_o0.jld2" result graph_props N
 end
 
 result = SUITE
 
-@save "data/bench.jld2" result graph_props N
+@save "data/bench_o0.jld2" result graph_props N
