@@ -12,8 +12,6 @@ using CairoMakie
 using BenchmarkPlots
 using LaTeXStrings
 
-jsonfile = "$(@__DIR__)/data/bench.json"
-
 include("$(@__DIR__)/../utils.jl")
 
 plotpath = "$(@__DIR__)/plots"
