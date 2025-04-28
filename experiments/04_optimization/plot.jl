@@ -63,6 +63,5 @@ with_theme(theme_latexfonts()) do
     include("plotting/opt_progress.jl")
     include("plotting/opt_progress_vs_flops.jl")
     include("plotting/opt_progress_vs_flops_norm.jl")
+    include("plotting/opt_progress_speedup.jl")
 end
-
-# TODO: plot flops vs execution time
