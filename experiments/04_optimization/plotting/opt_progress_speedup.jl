@@ -36,8 +36,8 @@ for PROC in SCATTERING_PROCESSES
     ax = Axis(
         f[1, 1];
         xlabel = "number of optimization steps",
-        ylabel = "normalized speedup",
-        #limits = (nothing, _find_y_lims([data_cpu, data_gpu, data_flops])),
+        ylabel = "relative speedup",
+        limits = (nothing, (0.5, 7.5)),
         yminorgridvisible = true,
         yminorticksvisible = true,
         yminorticks = IntervalsBetween(5),
@@ -45,7 +45,7 @@ for PROC in SCATTERING_PROCESSES
         xminorticks = IntervalsBetween(5),
         #yscale=log10,
         #xticks=(STEPS, string.(STEPS)),
-        #yticks=([0.0, 0.5, 1.0], ["0 %", "50 %", "100 %"]),
+        yticks = ([1, 3, 5, 7], ["1", "3", "5", "7"]),
     )
 
     sc_cpu = plot!(ax, STEPS, data_cpu; markersize = 12, color = colors[1])
@@ -53,7 +53,7 @@ for PROC in SCATTERING_PROCESSES
     sc_flops = plot!(ax, STEPS, data_flops; marker = :xcross, markersize = 10, color = :black)
 
     # Legend
-    labels = ["CPU", "GPU", "FLOPs (theoretical)"]
+    labels = ["CPU", "GPU", "theoretical"]
     elements = [sc_cpu, sc_gpu, sc_flops]
 
     Legend(
