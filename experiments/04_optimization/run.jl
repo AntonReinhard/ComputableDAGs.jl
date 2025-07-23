@@ -1,6 +1,6 @@
 using ComputableDAGs
 using Pkg
-Pkg.develop(; path="/home/reinha57/repos/QEDFeynman.jl/")
+Pkg.develop(; path = "/home/reinha57/repos/QEDFeynman.jl/")
 using QEDFeynman
 using RuntimeGeneratedFunctions
 using BenchmarkTools
@@ -29,7 +29,7 @@ STEP_SIZE = 10
 
 SUITE = BenchmarkGroup()
 
-graph_props = Dict{String,Vector{Tuple{Int,GraphProperties}}}()
+graph_props = Dict{String, Vector{Tuple{Int, GraphProperties}}}()
 
 @info "== Reductions benchmark =="
 
@@ -48,37 +48,43 @@ for INSTANCE_STR in SCATTERING_PROCESSES
     input = PhaseSpacePoint(
         INSTANCE,
         MODEL,
-        PhasespaceDefinition(SphericalCoordinateSystem(), ElectronRestFrame()),
+        FlatPhaseSpaceLayout(ComptonRestSystem()),
         tuple((rand(SFourMomentum) for _ in 1:number_incoming_particles(INSTANCE))...),
         tuple((rand(SFourMomentum) for _ in 1:number_outgoing_particles(INSTANCE))...),
     )
-    cu_inputs = CuVector([
-        PhaseSpacePoint(
-            INSTANCE,
-            MODEL,
-            PhasespaceDefinition(SphericalCoordinateSystem(), ElectronRestFrame()),
-            tuple((rand(SFourMomentum) for _ in 1:number_incoming_particles(INSTANCE))...),
-            tuple((rand(SFourMomentum) for _ in 1:number_outgoing_particles(INSTANCE))...),
-        ) for _ in 1:N
-    ])
+    cu_inputs = CuVector(
+        [
+            PhaseSpacePoint(
+                    INSTANCE,
+                    MODEL,
+                    FlatPhaseSpaceLayout(ComptonRestSystem()),
+                    tuple((rand(SFourMomentum) for _ in 1:number_incoming_particles(INSTANCE))...),
+                    tuple((rand(SFourMomentum) for _ in 1:number_outgoing_particles(INSTANCE))...),
+                ) for _ in 1:N
+        ]
+    )
     cu_outputs = CuVector([0.0 for _ in 1:N])
 
     # build graph
     g = graph(INSTANCE)
-    graph_props[INSTANCE_STR] = Tuple{Int,GraphProperties}[]
+    graph_props[INSTANCE_STR] = Tuple{Int, GraphProperties}[]
     steps = 0
 
     # benchmark at different points of optimization
     push!(graph_props[INSTANCE_STR], (steps, get_properties(g)))
-    func = get_compute_function(g, INSTANCE, cpu_st(), @__MODULE__; closures_size=0)
+    func = get_compute_function(g, INSTANCE, cpu_st(), @__MODULE__; closures_size = 0)
     func(input)
     cu_func = eval(kernel(CUDAGPU, g, INSTANCE, @__MODULE__))
     INSTANCE_SUITE["CPU"][steps] = @benchmark $func($input)
-    INSTANCE_SUITE["GPU"][steps] = @benchmark (CUDA.@sync (@cuda threads = t blocks = b k( #=always_inline = true=#
-        in,
-        out,
-        n,
-    ))) setup = (n = $N; t = 32; b = $N ÷ 32; k = $cu_func; in = $cu_inputs; out = $cu_outputs)
+    INSTANCE_SUITE["GPU"][steps] = @benchmark (
+        CUDA.@sync (
+            @cuda threads = t blocks = b k( #=always_inline = true=#
+                in,
+                out,
+                n,
+            )
+        )
+    ) setup = (n = $N; t = 32; b = $N ÷ 32; k = $cu_func; in = $cu_inputs; out = $cu_outputs)
     INSTANCE_SUITE["OPTIM"][steps] = @benchmark optimize!(ReductionOptimizer(), g_temp, STEP_SIZE) setup = (
         g_temp = graph($INSTANCE)
     )
@@ -88,7 +94,7 @@ for INSTANCE_STR in SCATTERING_PROCESSES
         steps += STEP_SIZE
         optimize!(ReductionOptimizer(), g, STEP_SIZE)
         push!(graph_props[INSTANCE_STR], (steps, get_properties(g)))
-        func = get_compute_function(g, INSTANCE, cpu_st(), @__MODULE__; closures_size=0)
+        func = get_compute_function(g, INSTANCE, cpu_st(), @__MODULE__; closures_size = 0)
         func(input)
 
         cu_func = eval(kernel(CUDAGPU, g, INSTANCE, @__MODULE__))
@@ -97,11 +103,15 @@ for INSTANCE_STR in SCATTERING_PROCESSES
             g_temp = graph($INSTANCE); optimize!(ReductionOptimizer(), g_temp, $steps) # generate and reduce up to that point
         )
         INSTANCE_SUITE["CPU"][steps] = @benchmark $func($input)
-        INSTANCE_SUITE["GPU"][steps] = @benchmark (CUDA.@sync (@cuda threads = t blocks = b k( #=always_inline = true=#
-            in,
-            out,
-            n,
-        ))) setup = (n = $N; t = 32; b = $N ÷ 32; k = $cu_func; in = $cu_inputs; out = $cu_outputs)
+        INSTANCE_SUITE["GPU"][steps] = @benchmark (
+            CUDA.@sync (
+                @cuda threads = t blocks = b k( #=always_inline = true=#
+                    in,
+                    out,
+                    n,
+                )
+            )
+        ) setup = (n = $N; t = 32; b = $N ÷ 32; k = $cu_func; in = $cu_inputs; out = $cu_outputs)
     end
 
     @info "    Steps: $steps"

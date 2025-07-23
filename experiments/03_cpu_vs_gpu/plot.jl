@@ -46,4 +46,5 @@ SCATTERING_PROCESSES = [
 
 with_theme(theme_latexfonts()) do
     include("plotting/cpu_vs_gpu_exec.jl")
+    include("plotting/f_exec_per_line.jl")
 end

@@ -1,7 +1,7 @@
 using Distributed
 using ComputableDAGs
 using Pkg
-Pkg.develop(; path="/home/reinha57/repos/QEDFeynman.jl/")
+Pkg.develop(; path = "/home/reinha57/repos/QEDFeynman.jl/")
 using QEDFeynman
 using RuntimeGeneratedFunctions
 using BenchmarkTools
@@ -15,7 +15,7 @@ RuntimeGeneratedFunctions.init(@__MODULE__)
 
 global_logger(NullLogger())
 
-function time_compilation(expr; setup=nothing)
+function time_compilation(expr; setup = nothing)
     ps = addprocs(1)
     remotecall_fetch(only(ps)) do
         @eval begin
@@ -33,10 +33,10 @@ function time_compilation(expr; setup=nothing)
     return compile_time
 end
 
-function bench_compilation(expr; setup=nothing, n=20)
+function bench_compilation(expr; setup = nothing, n = 20)
     times = Float64[]
     for _ in 1:n
-        push!(times, time_compilation(expr; setup=setup))
+        push!(times, time_compilation(expr; setup = setup))
     end
 
     return times
@@ -57,9 +57,9 @@ SCATTERING_PROCESSES = [
 SUITE = BenchmarkGroup()
 SUITE["graph_gen"] = BenchmarkGroup()
 
-graph_props = Dict{String,GraphProperties}()
-comp_times = Dict{String,Vector{Float64}}()
-node_dicts = Dict{String,Dict{Type,Int64}}()
+graph_props = Dict{String, GraphProperties}()
+comp_times = Dict{String, Vector{Float64}}()
+node_dicts = Dict{String, Dict{Type, Int64}}()
 
 for INSTANCE_STR in SCATTERING_PROCESSES
     INSTANCE = parse_process(INSTANCE_STR, ABCModel())
@@ -73,7 +73,7 @@ for INSTANCE_STR in SCATTERING_PROCESSES
     g = parse_dag(joinpath(@__DIR__, "input", "$INSTANCE_STR.txt"), INSTANCE)
     graph_props[INSTANCE_STR] = get_properties(g)
 
-    node_dicts[INSTANCE_STR] = Dict{Type,Int64}()
+    node_dicts[INSTANCE_STR] = Dict{Type, Int64}()
     for node in g.nodes
         if haskey(node_dicts[INSTANCE_STR], typeof(task(node)))
             node_dicts[INSTANCE_STR][typeof(task(node))] = node_dicts[INSTANCE_STR][typeof(task(node))] + 1
@@ -85,14 +85,14 @@ for INSTANCE_STR in SCATTERING_PROCESSES
     psp = PhaseSpacePoint(
         INSTANCE,
         MODEL,
-        PhasespaceDefinition(SphericalCoordinateSystem(), ElectronRestFrame()),
+        FlatPhaseSpaceLayout(ComptonRestSystem()),
         tuple((rand(SFourMomentum) for _ in 1:number_incoming_particles(INSTANCE))...),
         tuple((rand(SFourMomentum) for _ in 1:number_outgoing_particles(INSTANCE))...),
     )
 
-    func = get_compute_function(g, INSTANCE, cpu_st(), @__MODULE__; closures_size=0)
+    func = get_compute_function(g, INSTANCE, cpu_st(), @__MODULE__; closures_size = 0)
 
-    SUITE["f_gen"][INSTANCE_STR] = @benchmarkable get_compute_function(g_, proc, machine, @__MODULE__; closures_size=0) setup = (
+    SUITE["f_gen"][INSTANCE_STR] = @benchmarkable get_compute_function(g_, proc, machine, @__MODULE__; closures_size = 0) setup = (
         g_ = $g; proc = $INSTANCE; machine = cpu_st(); GC.gc()
     )
 
@@ -102,17 +102,17 @@ for INSTANCE_STR in SCATTERING_PROCESSES
 
     comp_times[INSTANCE_STR] = bench_compilation(
         :(f(p));
-        setup=quote
+        setup = quote
             using QEDcore, QEDprocesses, RuntimeGeneratedFunctions
             RuntimeGeneratedFunctions.init(@__MODULE__)
             p = PhaseSpacePoint(
                 $INSTANCE,
                 $MODEL,
-                PhasespaceDefinition(SphericalCoordinateSystem(), ElectronRestFrame()),
+                FlatPhaseSpaceLayout(ComptonRestSystem()),
                 tuple((rand(SFourMomentum) for _ in 1:number_incoming_particles($INSTANCE))...),
                 tuple((rand(SFourMomentum) for _ in 1:number_outgoing_particles($INSTANCE))...),
             )
-            f = get_compute_function($g, $INSTANCE, cpu_st(), @__MODULE__; closures_size=0)
+            f = get_compute_function($g, $INSTANCE, cpu_st(), @__MODULE__; closures_size = 0)
         end,
     )
     println("collected $(length(comp_times[INSTANCE_STR])) compile time samples")
@@ -121,7 +121,7 @@ for INSTANCE_STR in SCATTERING_PROCESSES
 end
 
 tune!(SUITE)
-result = run(SUITE; verbose=true)
+result = run(SUITE; verbose = true)
 
 BenchmarkTools.save("data/bench.json", result)
 @save "data/bench.jld2" result graph_props node_dicts comp_times

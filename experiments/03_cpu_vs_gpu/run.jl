@@ -1,6 +1,6 @@
 using ComputableDAGs
 using Pkg
-Pkg.develop(; path="/home/reinha57/repos/QEDFeynman.jl/")
+Pkg.develop(; path = "/home/reinha57/repos/QEDFeynman.jl/")
 using QEDFeynman
 using RuntimeGeneratedFunctions
 using BenchmarkTools
@@ -29,7 +29,7 @@ SCATTERING_PROCESSES = [
 
 SUITE = BenchmarkGroup()
 
-graph_props = Dict{String,GraphProperties}()
+graph_props = Dict{String, GraphProperties}()
 
 @info "== CPU vs GPU benchmark =="
 
@@ -46,15 +46,15 @@ for INSTANCE_STR in SCATTERING_PROCESSES
     graph_props[INSTANCE_STR] = get_properties(g)
 
     # build function & inputs
-    func = get_compute_function(g, INSTANCE, cpu_st(), @__MODULE__; closures_size=0)
+    func = get_compute_function(g, INSTANCE, cpu_st(), @__MODULE__; closures_size = 0)
     inputs = [
         PhaseSpacePoint(
-            INSTANCE,
-            MODEL,
-            PhasespaceDefinition(SphericalCoordinateSystem(), ElectronRestFrame()),
-            tuple((rand(SFourMomentum) for _ in 1:number_incoming_particles(INSTANCE))...),
-            tuple((rand(SFourMomentum) for _ in 1:number_outgoing_particles(INSTANCE))...),
-        ) for i in 1:N
+                INSTANCE,
+                MODEL,
+                FlatPhaseSpaceLayout(ComptonRestSystem()),
+                tuple((rand(SFourMomentum) for _ in 1:number_incoming_particles(INSTANCE))...),
+                tuple((rand(SFourMomentum) for _ in 1:number_outgoing_particles(INSTANCE))...),
+            ) for i in 1:N
     ]
 
     cu_func = eval(kernel(CUDAGPU, g, INSTANCE, @__MODULE__))
@@ -63,14 +63,18 @@ for INSTANCE_STR in SCATTERING_PROCESSES
 
     # create benchmarks
     INSTANCE_SUITE["CPU"] = @benchmarkable f.(i) setup = (f = $func; i = $inputs; GC.gc())
-    INSTANCE_SUITE["GPU"] = @benchmarkable (CUDA.@sync (@cuda threads = t blocks = b always_inline = true k(
-        in, out, n
-    ))) setup = (n = $N; t = 32; b = $N ÷ 32; k = $cu_func; in = $cu_inputs; out = $cu_outputs)
+    INSTANCE_SUITE["GPU"] = @benchmarkable (
+        CUDA.@sync (
+            @cuda threads = t blocks = b always_inline = true k(
+                in, out, n
+            )
+        )
+    ) setup = (n = $N; t = 32; b = $N ÷ 32; k = $cu_func; in = $cu_inputs; out = $cu_outputs)
 
     SUITE[INSTANCE_STR] = INSTANCE_SUITE
 end
 
-tune!(SUITE; verbose=true)
-result = run(SUITE; verbose=true)
+tune!(SUITE; verbose = true)
+result = run(SUITE; verbose = true)
 
 @save "data/bench.jld2" result graph_props N
