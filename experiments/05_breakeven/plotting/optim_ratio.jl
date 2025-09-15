@@ -33,8 +33,10 @@ ax = Axis(
 labels = []
 elements = []
 
+c = 0
 
 for PROC in SCATTERING_PROCESSES[2:4]
+    global c += 1
     data_proc = data[PROC]
 
     local data_cpu_unopt = data_proc["CPU"]["unoptimized"]
@@ -62,8 +64,8 @@ for PROC in SCATTERING_PROCESSES[2:4]
     f_gpu(n) = (n * data_gpu_opt) / (n * data_gpu_opt + opt_time)
 
     # plot curves for these processes
-    local line_cpu = lines!(ax, xvalues, f_cpu.(xvalues))
-    local line_gpu = lines!(ax, xvalues, f_gpu.(xvalues))
+    local line_cpu = lines!(ax, xvalues, f_cpu.(xvalues); linestyle = :solid, color = colors[c])
+    local line_gpu = lines!(ax, xvalues, f_gpu.(xvalues); linestyle = :dash, color = colors[c])
 
     # Legend
     push!(labels, L"CPU $%$(proc_str(PROC)) \gamma$")
