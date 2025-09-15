@@ -58,4 +58,5 @@ SCATTERING_PROCESSES = [
 
 with_theme(theme_latexfonts()) do
     include("plotting/break_even.jl")
+    include("plotting/optim_ratio.jl")
 end
