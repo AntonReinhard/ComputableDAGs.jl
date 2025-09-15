@@ -17,8 +17,8 @@ f = Figure(; size = (600, 500))
 ax = Axis(
     f[1, 1];
     xlabel = "number of samples",
-    ylabel = "ratio of sample calculation time",
-    limits = (xlimits, (0.0, 1.0)),
+    ylabel = "relative speedup through optimization",
+    limits = (xlimits, nothing),
     yminorgridvisible = true,
     yminorticksvisible = true,
     #yminorticks = IntervalsBetween(),
@@ -58,10 +58,9 @@ for PROC in SCATTERING_PROCESSES[2:4]
     data_gpu_opt = data_gpu_opt.times
     data_gpu_opt = median(data_gpu_opt) / N       # benchmarked N elements at a time
 
-
     # function (closure) returning ratio for n elements
-    f_cpu(n) = (n * data_cpu_opt) / (n * data_cpu_opt + opt_time)
-    f_gpu(n) = (n * data_gpu_opt) / (n * data_gpu_opt + opt_time)
+    f_cpu(n) = (n * data_cpu_unopt) / (n * data_cpu_opt + opt_time)
+    f_gpu(n) = (n * data_gpu_unopt) / (n * data_gpu_opt + opt_time)
 
     # plot curves for these processes
     local line_cpu = lines!(ax, xvalues, f_cpu.(xvalues); linestyle = :solid, color = colors[c])
@@ -75,6 +74,10 @@ for PROC in SCATTERING_PROCESSES[2:4]
     push!(elements, line_gpu)
 end
 
+line_breakeven = lines!(ax, xvalues, one.(xvalues); linestyle = :dot, color = colors[c + 1])
+push!(labels, "break-even point")
+push!(elements, line_breakeven)
+
 Legend(
     f[2, 1],
     elements,
@@ -85,6 +88,7 @@ Legend(
     #halign = :center,
     valign = :bottom,
     orientation = :horizontal,
+    nbanks = 2
 )
 
-save(joinpath(plotpath, "optim_ratio.pdf"), f)
+save(joinpath(plotpath, "optim_total_speedup.pdf"), f)
