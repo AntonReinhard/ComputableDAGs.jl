@@ -13,7 +13,7 @@ xvalues = [logrange(xlimits[1], xlimits[2], 200)...]
 xticks1 = [1, 10, 100, 1000, 10000, 100000, 1000000]
 xticks2 = [L"$10^0$", L"$10^1$", L"$10^2$", L"$10^3$", L"$10^4$", L"$10^5$", L"$10^6$"]
 
-f = Figure(; size = (600, 500))
+f = Figure(; size = (600, 450))
 ax = Axis(
     f[1, 1];
     xlabel = "number of samples",
@@ -22,7 +22,7 @@ ax = Axis(
     yminorgridvisible = true,
     yminorticksvisible = true,
     #yminorticks = IntervalsBetween(),
-    xminorticksvisible = true,
+    xminorticksvisible = false,
     #xminorticks = IntervalsBetween(5),
     #yscale = identity,
     xscale = log10,
@@ -63,32 +63,29 @@ for PROC in SCATTERING_PROCESSES[2:4]
     f_gpu(n) = (n * data_gpu_unopt) / (n * data_gpu_opt + opt_time)
 
     # plot curves for these processes
-    local line_cpu = lines!(ax, xvalues, f_cpu.(xvalues); linestyle = :solid, color = colors[c])
-    local line_gpu = lines!(ax, xvalues, f_gpu.(xvalues); linestyle = :dash, color = colors[c])
+    local line_cpu = lines!(ax, xvalues, f_cpu.(xvalues); linestyle = :solid, color = colors[c], linewidth = 2.5)
+    local line_gpu = lines!(ax, xvalues, f_gpu.(xvalues); linestyle = :dash, color = colors[c], linewidth = 2.5)
 
     # Legend
-    push!(labels, L"CPU $%$(proc_str(PROC)) \gamma$")
+    push!(labels, L"$e^\minus \gamma^{%$(proc_str(PROC))} \rightarrow e^{\minus} \gamma$")
     push!(elements, line_cpu)
-
-    push!(labels, L"GPU $%$(proc_str(PROC)) \gamma$")
-    push!(elements, line_gpu)
 end
 
-line_breakeven = lines!(ax, xvalues, one.(xvalues); linestyle = :dot, color = colors[c + 1])
+line_breakeven = lines!(ax, xvalues, one.(xvalues); linestyle = :dot, color = "black", linewidth = 4)
 push!(labels, "break-even point")
 push!(elements, line_breakeven)
 
 Legend(
-    f[2, 1],
+    f[1, 1],
     elements,
     labels;
-    tellheight = true,
+    tellheight = false,
     tellwidth = false,
     margin = (10, 10, 10, 10),
-    #halign = :center,
-    valign = :bottom,
-    orientation = :horizontal,
-    nbanks = 2
+    halign = :left,
+    valign = :top,
+    orientation = :vertical,
+    #nbanks = 1
 )
 
 save(joinpath(plotpath, "optim_total_speedup.pdf"), f)
