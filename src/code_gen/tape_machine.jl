@@ -219,7 +219,9 @@ function _closure_fc(
 
     fc_expr = Expr(                               # actual function body of the closure
         :block,
+        Expr(:noinline, true),
         expr_from_fc.(code_block)...,             # no return statement necessary, will be done via capture and local init
+        Expr(:noinline, false)
     )
 
     fc = FunctionCall(
