@@ -17,6 +17,7 @@ export insert_node!, insert_edge!
 export is_entry_node, is_exit_node
 export compute, data, compute_effort
 export properties, exit_node
+export read_graphml, compute_tasks_graphml
 
 # graph operation related
 export reset_graph!
@@ -67,6 +68,7 @@ include("diff/mute.jl")
 include("graph/compare.jl")
 include("graph/interface.jl")
 include("graph/mute.jl")
+include("graph/parse.jl")
 include("graph/print.jl")
 include("graph/properties.jl")
 

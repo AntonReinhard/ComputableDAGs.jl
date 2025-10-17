@@ -52,3 +52,36 @@ Return the given vector as single String without quotation marks or brackets.
 function unroll_symbol_vector(vec::VEC) where {VEC <: Union{AbstractVector, Tuple}}
     return Expr(:tuple, vec...)
 end
+
+function _sanitize_name(s::String)
+    ## WARN: ai generated, surely this is simple enough for an AI to write correctly
+
+    # List of Julia reserved keywords
+    keywords = Set(
+        [
+            "if", "else", "elseif", "while", "for", "begin", "end", "try", "catch", "finally",
+            "return", "break", "continue", "function", "macro", "quote", "let", "local",
+            "global", "const", "do", "module", "baremodule", "using", "import", "export",
+            "struct", "mutable", "primitive", "type", "abstract", "where", "isa", "in",
+            "new", "typealias",
+        ]
+    )
+
+    # Replace invalid characters with underscore
+    s_clean = replace(s, r"[^\w]" => "_")
+
+    # Remove leading characters until we hit a valid start (letter or underscore)
+    s_clean = replace(s_clean, r"^[^A-Za-z_]+" => "")
+
+    # If string becomes empty or starts with a digit, prepend underscore
+    if isempty(s_clean) || isnumeric(first(s_clean))
+        s_clean = "_" * s_clean
+    end
+
+    # If it's a keyword, append underscore
+    if s_clean in keywords
+        s_clean *= "_"
+    end
+
+    return s_clean
+end
