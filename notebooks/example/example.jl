@@ -3,44 +3,41 @@ using ComputableDAGs
 using ComputableDAGs: compute
 
 @compute_task T0 1 () -> begin
-    sleep(10.0e-3)
+    #sleep(1.0e-3)
     return "T0_data"
 end
 @compute_task T1 1 (_) -> begin
-    sleep(10.0e-3)
+    #sleep(1.0e-3)
     return "T1_data"
 end
 @compute_task T2 2 (_, _) -> begin
-    sleep(20.0e-3)
+    #sleep(1.0e-3)
     return "T2_data"
 end
 @compute_task T3 2 (_) -> begin
-    sleep(20.0e-3)
+    #sleep(1.0e-3)
     return "T3_data"
 end
 @compute_task T4 2 (_) -> begin
-    sleep(20.0e-3)
+    #sleep(1.0e-3)
     return "T4_data"
 end
 @compute_task T5 2 (_) -> begin
-    sleep(20.0e-3)
+    #sleep(1.0e-3)
     return "T5_data"
 end
 @compute_task T6 2 (_, _) -> begin
-    sleep(20.0e-3)
+    #sleep(1.0e-3)
     return "T6_data"
 end
 @compute_task T7 2 (_) -> begin
-    sleep(20.0e-3)
+    #sleep(1.0e-3)
     return "T7_data"
 end
 @compute_task T8 3 (_, _, _) -> begin
-    sleep(30.0e-3)
+    #sleep(1.0e-3)
     return "T8_data"
 end
-
-# use IPC sockets
-socket_prefix = "ipc:///tmp/julia_zmq_example"
 
 # Full graph: (task - inputs)
 # T8 - T5, T6, T7
@@ -74,3 +71,6 @@ socket_prefix = "ipc:///tmp/julia_zmq_example"
 # D1 -> D2: Transport2
 # D2 -> D0: Transport1
 # D2 -> D1: Transport0, Transport6
+
+N = 100000
+socket_type = "tcp"

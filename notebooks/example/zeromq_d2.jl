@@ -1,6 +1,8 @@
 using ZMQ
 include("example.jl")
 
+const DEV = :D2
+
 ctx = ZMQ.context()
 
 # This device executes tasks:
@@ -16,46 +18,33 @@ ctx = ZMQ.context()
 # D0 -> D2: Ø
 # D1 -> D2: Transport2
 
-# bind sockets that send
-@info "binding sockets"
+# setup sockets
+include("sockets/" * socket_type * "_sockets.jl")
 
-D2D0_pair_socket = Socket(ctx, PAIR)
-bind(D2D0_pair_socket, socket_prefix * "_d2d0.socket")
-
-D2D1_pair_socket = Socket(ctx, PAIR)
-bind(D2D1_pair_socket, socket_prefix * "_d2d1.socket")
-
-# connect to sockets that recv
-@info "connecting sockets"
-
-# unused
-#D0D2_pair_socket = Socket(ctx, PAIR)
-#connect(D0D2_pair_socket, socket_prefix * "_d0d2.socket")
-
-D1D2_pair_socket = Socket(ctx, PAIR)
-connect(D1D2_pair_socket, socket_prefix * "_d1d2.socket")
-
-@info "starting calc"
-# do the calculating ™
-begin
+function f(::Val{N}) where {N}
     T0_data = compute(T0())
-    send(D2D0_pair_socket, T0_data)
-    send(D2D1_pair_socket, T0_data)
-    @info "sent $T0_data (expect T0_data)"
+    send(D2D0_socket, T0_data)
+    send(D2D1_socket, T0_data)
+    N && @assert T0_data == "T0_data"
 
-    T1_data = String(recv(D1D2_pair_socket))
-    @info "received $T1_data (expect T1_data)"
+    T1_data = String(recv(D1D2_socket))
+    N && @assert T1_data == "T1_data"
 
     T4_data = compute(T4(), T1_data)
-    @info "calculated $T4_data (expect T4_data)"
+    N && @assert T4_data == "T4_data"
 
     T7_data = compute(T7(), T4_data)
-    send(D2D1_pair_socket, T7_data)
-    @info "sent $T7_data (expect T7_data)"
+    send(D2D1_socket, T7_data)
+    return N && @assert T7_data == "T7_data"
+end
 
-    @info "D2 finished"
+@info "starting calc"
+f(Val(true))
+@info "D2 test finished"
+
+@time for _ in 1:N
+    f(Val(false))
 end
 
 @info "closing bound sockets"
-close(D2D0_pair_socket)
-close(D2D1_pair_socket)
+close_sockets()
