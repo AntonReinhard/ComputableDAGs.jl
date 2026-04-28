@@ -107,12 +107,12 @@ global D1D2_socket
 global D2D0_socket
 global D2D1_socket
 
-include("sockets/tcp_sockets.jl")
-include("sockets/ipc_sockets.jl")
+include("src/sockets/tcp_sockets.jl")
+include("src/sockets/ipc_sockets.jl")
 
-include("zeromq_d0.jl")
-include("zeromq_d1.jl")
-include("zeromq_d2.jl")
+include("src/zeromq_d0.jl")
+include("src/zeromq_d1.jl")
+include("src/zeromq_d2.jl")
 
 function main()
     parsed_args = parse_commandline()
@@ -137,9 +137,11 @@ function main()
     run_device(v_dev, Val(false))
     Q || @info "Device " * string(dev) * " test finished"
 
-    @time for _ in 1:N
+    elapsed = @elapsed for _ in 1:N
         run_device(v_dev, Val(false))
     end
+
+    println(elapsed)
 
     Q || @info "Closing bound sockets"
     return close_sockets(v_dev, v_socket)
