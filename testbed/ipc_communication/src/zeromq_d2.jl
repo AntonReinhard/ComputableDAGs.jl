@@ -15,17 +15,17 @@ function run_device(::Val{2}, ::Val{TEST}) where {TEST}
     T0_data = compute(T0())
     send(D2D0_socket, T0_data)
     send(D2D1_socket, T0_data)
-    TEST && @assert T0_data == "T0_data"
+    TEST && @assert T0_data == DATA[1]
 
-    T1_data = String(recv(D1D2_socket))
-    TEST && @assert T1_data == "T1_data"
+    T1_data = recv(D1D2_socket)
+    TEST && @assert T1_data == DATA[2]
 
     T4_data = compute(T4(), T1_data)
-    TEST && @assert T4_data == "T4_data"
+    TEST && @assert T4_data == DATA[5]
 
     T7_data = compute(T7(), T4_data)
     send(D2D1_socket, T7_data)
-    TEST && @assert T7_data == "T7_data"
+    TEST && @assert T7_data == DATA[8]
 
     return nothing
 end

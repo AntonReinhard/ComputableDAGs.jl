@@ -1,44 +1,3 @@
-using ComputableDAGs
-
-using ComputableDAGs: compute
-
-@compute_task T0 1 () -> begin
-    # sleep(1.0e-3)
-    return "T0_data"
-end
-@compute_task T1 1 (_) -> begin
-    # sleep(1.0e-3)
-    return "T1_data"
-end
-@compute_task T2 2 (_, _) -> begin
-    # sleep(1.0e-3)
-    return "T2_data"
-end
-@compute_task T3 2 (_) -> begin
-    # sleep(1.0e-3)
-    return "T3_data"
-end
-@compute_task T4 2 (_) -> begin
-    # sleep(1.0e-3)
-    return "T4_data"
-end
-@compute_task T5 2 (_) -> begin
-    # sleep(1.0e-3)
-    return "T5_data"
-end
-@compute_task T6 2 (_, _) -> begin
-    # sleep(1.0e-3)
-    return "T6_data"
-end
-@compute_task T7 2 (_) -> begin
-    # sleep(1.0e-3)
-    return "T7_data"
-end
-@compute_task T8 3 (_, _, _) -> begin
-    # sleep(1.0e-3)
-    return "T8_data"
-end
-
 # Full graph: (task - inputs)
 # T8 - T5, T6, T7
 # T7 - T4
@@ -82,6 +41,10 @@ function parse_commandline()
         help = "number of runs"
         arg_type = Int
         required = true
+        "--data"
+        help = "how much data to transfer with each task (in Bytes)"
+        arg_type = Int
+        default = 8
         "--device", "-d"
         help = "which device to start (0-2)"
         arg_type = Int
@@ -107,6 +70,8 @@ global D1D2_socket
 global D2D0_socket
 global D2D1_socket
 
+include("src/tasks.jl")
+
 include("src/sockets/tcp_sockets.jl")
 include("src/sockets/ipc_sockets.jl")
 
@@ -121,24 +86,32 @@ function main()
     N = parsed_args["n"]
     socket_type = parsed_args["socket"]
     Q = parsed_args["quiet"]
+    D = parsed_args["data"]
 
     v_socket = Val(Symbol(socket_type))
     v_dev = Val(dev)
 
-    Q || @info "Running $N runs with device $dev and socket type $socket_type"
+    Q || @info "Running $N runs with device $dev and socket type $socket_type and $D bytes of data per message"
 
     ctx = ZMQ.context()
     global DEV = Symbol("D" * string(dev))
 
+    Q || @info "Setting up"
+
     open_sockets(v_dev, v_socket, ctx)
+    setup_tasks(D)
 
     Q || @info "Starting test"
     run_device(v_dev, Val(true))
     run_device(v_dev, Val(false))
+    GC.gc()
+
     Q || @info "Device " * string(dev) * " test finished"
 
     elapsed = @elapsed for _ in 1:N
         run_device(v_dev, Val(false))
+        # i hate julia sometimes
+        # GC.gc()
     end
 
     println(elapsed)
