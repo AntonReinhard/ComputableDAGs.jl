@@ -1,10 +1,3 @@
-using ZMQ
-include("example.jl")
-
-const DEV = :D1
-
-ctx = ZMQ.context()
-
 # This device executes tasks:
 # T1 - T0
 # T3 - T1
@@ -19,44 +12,32 @@ ctx = ZMQ.context()
 # D0 -> D1: Transport4, Transport5
 # D2 -> D1: Transport0, Transport6
 
-# setup sockets
-include("sockets/" * socket_type * "_sockets.jl")
-
-function f(::Val{N}) where {N}
+function run_device(::Val{1}, ::Val{TEST}) where {TEST}
     T0_data = String(recv(D2D1_socket))
-    N && @assert T0_data == "T0_data"
+    TEST && @assert T0_data == "T0_data"
 
     T1_data = compute(T1(), T0_data)
     send(D1D0_socket, T1_data)
     send(D1D2_socket, T1_data)
-    N && @assert T1_data == "T1_data"
+    TEST && @assert T1_data == "T1_data"
 
     T3_data = compute(T3(), T1_data)
-    N && @assert T3_data == "T3_data"
+    TEST && @assert T3_data == "T3_data"
 
     T2_data = String(recv(D0D1_socket))
-    N && @assert T2_data == "T2_data"
+    TEST && @assert T2_data == "T2_data"
 
     T6_data = compute(T6(), T2_data, T3_data)
-    N && @assert T6_data == "T6_data"
+    TEST && @assert T6_data == "T6_data"
 
     T5_data = String(recv(D0D1_socket))
-    N && @assert T5_data == "T5_data"
+    TEST && @assert T5_data == "T5_data"
 
     T7_data = String(recv(D2D1_socket))
-    N && @assert T7_data == "T7_data"
+    TEST && @assert T7_data == "T7_data"
 
     T8_data = compute(T8(), T5_data, T6_data, T7_data)
-    return N && @assert T8_data == "T8_data"
+    TEST && @assert T8_data == "T8_data"
+
+    return nothing
 end
-
-@info "starting calc"
-f(Val(true))
-@info "D1 test finished"
-
-@time for _ in 1:N
-    f(Val(false))
-end
-
-@info "closing bound sockets"
-close_sockets()
